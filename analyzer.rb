@@ -45,7 +45,7 @@ class Analyzer
     else
       #get all protocol
       while @end_time <= @last_packet_time
-        sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, tcp_srcport, tcp_dstport) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
+        sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, tcp_srcport, tcp_dstport, udp_srcport, udp_dstport) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
         puts @db.query(sql).fetch_row()
         slide_window
       end
