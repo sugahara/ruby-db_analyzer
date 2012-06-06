@@ -35,20 +35,35 @@ class Analyzer
     @end_time = @start_time + @delta_t -1
   end
 
-  def get_tcp_flow
-    while @end_time <= @last_packet_time
-      sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, tcp_srcport, tcp_dstport) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='tcp'"
-      puts @db.query(sql).fetch_row()
-      slide_window
+  def flow_query(protocol=nil)
+    if protocol != nil
+      while @end_time <= @last_packet_time
+        sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, tcp_srcport, tcp_dstport) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='#{protocol}'"
+        puts @db.query(sql).fetch_row()
+        slide_window
+      end
+    else
+      #get all protocol
+      while @end_time <= @last_packet_time
+        sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, tcp_srcport, tcp_dstport) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
+        puts @db.query(sql).fetch_row()
+        slide_window
+      end
     end
+  end
+
+  def get_tcp_flow
+    flow_query("tcp")
     init_time
   end
   
   def get_udp_flow
+    flow_query("udp")
     init_time
   end
   
   def get_all_flow
+    flow_query()
     init_time
   end
 
