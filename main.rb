@@ -10,8 +10,8 @@ class Main
 
   db = Mysql::new(db_host, db_user_name, db_pass, db_name)  
   analyzer = Analyzer.new(table_name, db, delta_t)
-  analyzer.get_tcp
-  analyzer.get_tcp
+  analyzer.get_tcp_flow
+  analyzer.get_tcp_flow
   
 
 end
