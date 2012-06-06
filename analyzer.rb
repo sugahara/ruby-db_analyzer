@@ -10,7 +10,7 @@ class Analyzer
     # 開始時と終了時を得る
     sql = "SELECT time from `#{@table_name}` where number = '1'"
     @start_time = datetime2time(@db.query(sql).fetch_row()[0])
-    @end_time = end_time = start_time + DELTA_T - 1
+    @end_time = @start_time + DELTA_T - 1
 
     sql = "SELECT time FROM `#{@table_name}` WHERE number = (select max(number) from `#{@table_name}`)"
     
