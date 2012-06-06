@@ -6,6 +6,7 @@ class Analyzer
     @table = table
     @db = db
     @delta_t = delta_t
+    @table_name = table
     # 開始時と終了時を得る
     sql = "SELECT time from `#{@table_name}` where number = '1'"
     @start_time = datetime2time(@db.query(sql).fetch_row()[0])
