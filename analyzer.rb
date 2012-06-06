@@ -35,7 +35,7 @@ class Analyzer
     @end_time = @start_time + @delta_t -1
   end
 
-  def get_tcp
+  def get_tcp_flow
     while @end_time <= @last_packet_time
       sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, tcp_srcport, tcp_dstport) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='tcp'"
       puts @db.query(sql).fetch_row()
@@ -44,11 +44,11 @@ class Analyzer
     init_time
   end
   
-  def get_udp
+  def get_udp_flow
     init_time
   end
   
-  def get_all
+  def get_all_flow
     init_time
   end
 
