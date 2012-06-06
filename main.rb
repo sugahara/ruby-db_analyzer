@@ -10,8 +10,12 @@ class Main
 
   db = Mysql::new(db_host, db_user_name, db_pass, db_name)  
   analyzer = Analyzer.new(table_name, db, delta_t)
+  puts "get_tcp_flow"
   analyzer.get_tcp_flow
-  analyzer.get_tcp_flow
+  puts "get_udp_flow"
+  analyzer.get_udp_flow
+  puts "get_all_flow"
+  analyzer.get_all_flow
   
 
 end
