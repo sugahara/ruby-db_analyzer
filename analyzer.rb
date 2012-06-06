@@ -37,7 +37,7 @@ class Analyzer
 
   def get_tcp
     while @end_time <= @last_packet_time
-      sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, tcp_srcport, tcp_dstport) FROM `#{@table_name}` WHERE time BETWEEN '#{start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='tcp'"
+      sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, tcp_srcport, tcp_dstport) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='tcp'"
       puts @db.query(sql).fetch_row()
       slide_window
     end
