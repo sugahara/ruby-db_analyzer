@@ -7,13 +7,15 @@ class Analyzer
     @db = db
     @delta_t = delta_t
     @table_name = table
+    init_time
+  end
+
+  def init_time
     # 開始時と終了時を得る
     sql = "SELECT time from `#{@table_name}` where number = '1'"
     @start_time = datetime2time(@db.query(sql).fetch_row()[0])
     @end_time = @start_time + @delta_t - 1
-
     sql = "SELECT time FROM `#{@table_name}` WHERE number = (select max(number) from `#{@table_name}`)"
-    
     @last_packet_time = datetime2time(@db.query(sql).fetch_row()[0])
   end
 
@@ -38,16 +40,16 @@ class Analyzer
       sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, tcp_srcport, tcp_dstport) FROM `#{@table_name}` WHERE time BETWEEN '#{start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='tcp'"
       puts @db.query(sql).fetch_row()
       slide_window
-      
     end
+    init_time
   end
   
   def get_udp
-
+    init_time
   end
   
   def get_all
-
+    init_time
   end
 
   
