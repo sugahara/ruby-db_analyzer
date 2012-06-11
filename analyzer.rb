@@ -7,6 +7,7 @@ class Analyzer
     @db = db
     @delta_t = delta_t
     @table_name = table
+    @result = []
     init_time
   end
 
@@ -39,33 +40,72 @@ class Analyzer
     if protocol != nil
       while @end_time <= @last_packet_time
         sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, port_src, port_dst) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='#{protocol}'"
-        puts @db.query(sql).fetch_row()
+        puts result = @db.query(sql).fetch_row()[0].to_i
+        @result << result
         slide_window
       end
     else
       #get all protocol
       while @end_time <= @last_packet_time
         sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, port_src, port_dst) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
-        puts @db.query(sql).fetch_row()
+        puts result = @db.query(sql).fetch_row()[0].to_i
+        @result << result
         slide_window
       end
     end
   end
 
+  def packet_query(protocol=nil)
+    if protocol != nil
+      while @end_time <= @last_packet_time
+        sql = "SELECT COUNT(*) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='#{protocol}'"
+        puts result = @db.query(sql).fetch_row()[0].to_i
+        @result << result
+        slide_window
+      end
+    else
+      while @end_time <= @last_packet_time
+        sql = "SELECT COUNT(*) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
+        puts result = @db.query(sql).fetch_row()[0].to_i
+        @result << result
+        slide_window
+      end
+    end
+  end
+  
   def get_tcp_flow
     flow_query("tcp")
     init_time
+    @result
   end
   
   def get_udp_flow
     flow_query("udp")
     init_time
+    @result
   end
   
   def get_all_flow
     flow_query()
     init_time
+    @result
   end
 
-  
+  def get_tcp_packet
+    packet_query("tcp")
+    init_time
+    @result
+  end
+
+  def get_udp_packet
+    packet_query("udp")
+    init_time
+    @result
+  end
+
+  def get_all_packet
+    packet_query()
+    init_time
+    @result
+  end
 end
