@@ -2,18 +2,19 @@
 class Analyzer
   # DBのインスタンスをもらってDBから値を取得して出力まで
 
-  def initialize(table, db, delta_t)
+  def initialize(table, db, delta_t, range=nil)
     @table = table
     @db = db
     @delta_t = delta_t
     @table_name = table
     @result = []
+    @range = range
     init_time
   end
 
   def init_time
     # 開始時と終了時を得る
-    sql = "SELECT time from `#{@table_name}` where number = '1'"
+    sql = "SELECT time from `#{@table_name}` where number = (select min(number) from `#{@table_name}`)"
     @start_time = datetime2time(@db.query(sql).fetch_row()[0])
     @end_time = @start_time + @delta_t - 1
     sql = "SELECT time FROM `#{@table_name}` WHERE number = (select max(number) from `#{@table_name}`)"
@@ -37,9 +38,11 @@ class Analyzer
   end
 
   def flow_query(protocol=nil)
+    @result = []
     if protocol != nil
       while @end_time <= @last_packet_time
         sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, port_src, port_dst) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='#{protocol}'"
+        sql += "AND time  BETWEEN '2012-05-26 00:00:00' AND '2012-06-01 23:59:59'"
         puts result = @db.query(sql).fetch_row()[0].to_i
         @result << result
         slide_window
@@ -48,6 +51,7 @@ class Analyzer
       #get all protocol
       while @end_time <= @last_packet_time
         sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, port_src, port_dst) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
+        sql += "AND time  BETWEEN '2012-05-26 00:00:00' AND '2012-06-01 23:59:59'"
         puts result = @db.query(sql).fetch_row()[0].to_i
         @result << result
         slide_window
@@ -56,9 +60,11 @@ class Analyzer
   end
 
   def packet_query(protocol=nil)
+    @result = []
     if protocol != nil
       while @end_time <= @last_packet_time
         sql = "SELECT COUNT(*) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='#{protocol}'"
+        sql += "AND time  BETWEEN '2012-05-26 00:00:00' AND '2012-06-01 23:59:59'"
         puts result = @db.query(sql).fetch_row()[0].to_i
         @result << result
         slide_window
@@ -66,6 +72,7 @@ class Analyzer
     else
       while @end_time <= @last_packet_time
         sql = "SELECT COUNT(*) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
+        sql += "AND time  BETWEEN '2012-05-26 00:00:00' AND '2012-06-01 23:59:59'"
         puts result = @db.query(sql).fetch_row()[0].to_i
         @result << result
         slide_window
