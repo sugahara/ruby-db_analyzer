@@ -1,21 +1,28 @@
 # -*- coding: utf-8 -*-
 class Analyzer
+  require 'ruby-debug'
   # DBのインスタンスをもらってDBから値を取得して出力まで
-
-  def initialize(table, db, delta_t, range=nil)
+  def initialize(table, db, delta_t, tables, init_start_time)
     @table = table
     @db = db
     @delta_t = delta_t
     @table_name = table
     @result = []
-    @range = range
+    @init_start_time = init_start_time
     init_time
   end
 
   def init_time
     # 開始時と終了時を得る
-    sql = "SELECT time from `#{@table_name}` where number = (select min(number) from `#{@table_name}`)"
-    @start_time = datetime2time(@db.query(sql).fetch_row()[0])
+    if @end_time != nil
+      @last_end_time = @end_time
+    end
+    if @init_start_time != nil
+      @start_time = @init_start_time
+    else
+      sql = "SELECT time from `#{@table_name}` where number = (select min(number) from `#{@table_name}`)"
+      @start_time = datetime2time(@db.query(sql).fetch_row()[0])
+    end
     @end_time = @start_time + @delta_t - 1
     sql = "SELECT time FROM `#{@table_name}` WHERE number = (select max(number) from `#{@table_name}`)"
     @last_packet_time = datetime2time(@db.query(sql).fetch_row()[0])
@@ -114,5 +121,9 @@ class Analyzer
     packet_query()
     init_time
     @result
+  end
+
+  def close
+    @last_end_time + 1
   end
 end
