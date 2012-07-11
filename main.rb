@@ -18,6 +18,11 @@ class Main
   analyzer = Analyzer.new(tables, db, delta_t)
   puts "get_tcp_flow"
   analyzer.get_tcp_flow
+  analyzer.get_udp_flow
+  analyzer.get_all_flow
+  analyzer.get_tcp_packet
+  analyzer.get_udp_packet
+  analyzer.get_all_packet
   #IO.to_file(analyzer.get_tcp_flow, "tcp_flow"+delta_t.to_s+"_"+tbl+".log")
   #puts "get_udp_flow"
   #IO.to_file(analyzer.get_udp_flow, "udp_flow"+delta_t.to_s+"_"+tbl+".log")

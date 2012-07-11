@@ -2,32 +2,27 @@
 class Analyzer
   require 'ruby-debug'
   # DBのインスタンスをもらってDBから値を取得して出力まで
-  def initialize(table, db, delta_t, tables, init_start_time)
-    @table = table
+  def initialize(table, db, delta_t)
+    @tables = table
+    @processing_table = @tables.first
     @db = db
     @delta_t = delta_t
-    @table_name = table
     @result = []
-    @init_start_time = init_start_time
-    init_time
-  end
-
-  def init_time
-    # 開始時と終了時を得る
-    if @end_time != nil
-      @last_end_time = @end_time
-    end
-    if @init_start_time != nil
-      @start_time = @init_start_time
-    else
-      sql = "SELECT time from `#{@table_name}` where number = (select min(number) from `#{@table_name}`)"
-      @start_time = datetime2time(@db.query(sql).fetch_row()[0])
-    end
+    time_check
+    sql = "SELECT time from `#{@processing_table}` where number = (select min(number) from `#{@processing_table}`)"
+    @start_time = datetime2time(@db.query(sql).fetch_row()[0])
     @end_time = @start_time + @delta_t - 1
-    sql = "SELECT time FROM `#{@table_name}` WHERE number = (select max(number) from `#{@table_name}`)"
+  end
+  
+  def time_check
+    # テーブルの最終パケット時刻を得る
+    # sql = "SELECT time from `#{@processing_table}` where number = (select min(number) from `#{@processing_table}`)"
+    # @start_time = datetime2time(@db.query(sql).fetch_row()[0])
+    # @end_time = @start_time + @delta_t - 1
+    sql = "SELECT time FROM `#{@processing_table}` WHERE number = (select max(number) from `#{@processing_table}`)"
     @last_packet_time = datetime2time(@db.query(sql).fetch_row()[0])
   end
-
+  
   def datetime2time(datetime)
     year = datetime.split(" ")[0].split("-")[0]
     month = datetime.split(" ")[0].split("-")[1]
@@ -44,86 +39,160 @@ class Analyzer
     @end_time = @start_time + @delta_t -1
   end
 
-  def flow_query(protocol=nil)
-    @result = []
+  def get_flow_sql(table, start_time, end_time, protocol=nil)
+    sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, port_src, port_dst) FROM `#{table}` WHERE time BETWEEN '#{start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
     if protocol != nil
-      while @end_time <= @last_packet_time
-        sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, port_src, port_dst) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='#{protocol}'"
-        sql += "AND time  BETWEEN '2012-05-26 00:00:00' AND '2012-06-01 23:59:59'"
-        puts result = @db.query(sql).fetch_row()[0].to_i
-        @result << result
-        slide_window
+      sql +=  "AND protocol_3='#{protocol}'"
+    end
+    sql += "AND time  BETWEEN '2012-05-26 00:00:00' AND '2012-06-01 23:59:59'"
+    sql
+  end
+
+  def get_packet_sql(table, start_time, end_time, protocol=nil)
+    sql = "SELECT COUNT(*) FROM `#{table}` WHERE time BETWEEN '#{start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
+    if protocol != nil
+      sql +=  "AND protocol_3='#{protocol}'"
+    end
+    sql += "AND time  BETWEEN '2012-05-26 00:00:00' AND '2012-06-01 23:59:59'"
+    sql
+  end
+
+  def flow_query(protocol=nil)
+    if protocol != nil
+      @tables.each_with_index do |tbl, i|
+        @processing_table = tbl
+        time_check
+        while @start_time <= @last_packet_time
+          p @start_time
+          p @end_time
+          sql = get_flow_sql(@processing_table, @start_time, @end_time, protocol)
+          result = @db.query(sql).fetch_row()[0].to_i
+          ## table transition
+          j = i
+          while @end_time >= @last_packet_time && @tables.size - 1 < j
+            @processing_table = @tables[j+1]
+            time_check
+            sql = get_packet_sql(@tables[j+1], @start_time, @end_time, protocol)
+            result += @db.query(sql).fetch_row()[0].to_i
+            j += 1
+          end
+          @processing_table = tbl
+          time_check
+          puts result
+          @result << result
+          slide_window
+        end
+        IO::to_file(@result,"#{protocol}_flow"+@delta_t.to_s+"_"+@processing_table+".log")
+        @result = []
       end
     else
-      #get all protocol
-      while @end_time <= @last_packet_time
-        sql = "SELECT COUNT(DISTINCT ip_src, ip_dst, port_src, port_dst) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
-        sql += "AND time  BETWEEN '2012-05-26 00:00:00' AND '2012-06-01 23:59:59'"
-        puts result = @db.query(sql).fetch_row()[0].to_i
-        @result << result
-        slide_window
+      @tables.each_with_index do |tbl, i|
+        @processing_table = tbl
+        time_check
+        while @start_time <= @last_packet_time
+          sql = get_flow_sql(@processing_table, @start_time, @end_time)
+          result = @db.query(sql).fetch_row()[0].to_i
+          ## table transition
+          j = i
+          while @end_time >= @last_packet_time && @tables.size - 1 < j
+            @processing_table = @tables[j+1]
+            time_check
+            sql = get_packet_sql(@tables[j+1], @start_time, @end_time)
+            result += @db.query(sql).fetch_row()[0].to_i
+            j += 1
+          end
+          @processing_table = tbl
+          time_check
+          puts result
+          @result << result
+          slide_window
+        end
+        IO::to_file(@result,"all_flow"+@delta_t.to_s+"_"+@processing_table+".log")
+        @result = []
       end
     end
   end
 
   def packet_query(protocol=nil)
-    @result = []
     if protocol != nil
-      while @end_time <= @last_packet_time
-        sql = "SELECT COUNT(*) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}' and protocol_3='#{protocol}'"
-        sql += "AND time  BETWEEN '2012-05-26 00:00:00' AND '2012-06-01 23:59:59'"
-        puts result = @db.query(sql).fetch_row()[0].to_i
-        @result << result
-        slide_window
+      @tables.each_with_index do |tbl, i|
+        @processing_table = tbl
+        time_check
+        while @start_time <= @last_packet_time
+          p @start_time
+          p @end_time
+          sql = get_packet_sql(@processing_table, @start_time, @end_time, protocol)
+          result = @db.query(sql).fetch_row()[0].to_i
+          ## table transition
+          j = i
+          while @end_time >= @last_packet_time && @tables.size - 1 < j
+            @processing_table = @tables[j+1]
+            time_check
+            sql = get_packet_sql(@tables[j+1], @start_time, @end_time, protocol)
+            result += @db.query(sql).fetch_row()[0].to_i
+            j += 1
+          end
+          @processing_table = tbl
+          time_check
+          puts result
+          @result << result
+          slide_window
+        end
+        IO::to_file(@result,"#{protocol}_packet"+@delta_t.to_s+"_"+@processing_table+".log")
+        @result = []
       end
     else
-      while @end_time <= @last_packet_time
-        sql = "SELECT COUNT(*) FROM `#{@table_name}` WHERE time BETWEEN '#{@start_time.strftime("%Y-%m-%d %H:%M:%S")}' AND '#{@end_time.strftime("%Y-%m-%d %H:%M:%S")}'"
-        sql += "AND time  BETWEEN '2012-05-26 00:00:00' AND '2012-06-01 23:59:59'"
-        puts result = @db.query(sql).fetch_row()[0].to_i
-        @result << result
-        slide_window
+      @tables.each_with_index do |tbl, i|
+        @processing_table = tbl
+        time_check
+        while @start_time <= @last_packet_time
+          p @start_time
+          p @end_time
+          sql = get_packet_sql(@processing_table, @start_time, @end_time)
+          result = @db.query(sql).fetch_row()[0].to_i
+
+          ## table transition
+          j = i
+          while @end_time >= @last_packet_time && @tables.size - 1 < j
+            @processing_table = @tables[j+1]
+            time_check
+            sql = get_packet_sql(@tables[j+1], @start_time, @end_time)
+            result += @db.query(sql).fetch_row()[0].to_i
+            j += 1
+          end
+          @processing_table = tbl
+          time_check
+          puts result
+          @result << result
+          slide_window
+        end
+        IO::to_file(@result,"all_packet"+@delta_t.to_s+"_"+@processing_table+".log")
+        @result = []
       end
     end
   end
   
   def get_tcp_flow
     flow_query("tcp")
-    init_time
-    @result
   end
   
   def get_udp_flow
     flow_query("udp")
-    init_time
-    @result
   end
   
   def get_all_flow
     flow_query()
-    init_time
-    @result
   end
 
   def get_tcp_packet
     packet_query("tcp")
-    init_time
-    @result
   end
 
   def get_udp_packet
     packet_query("udp")
-    init_time
-    @result
   end
 
   def get_all_packet
     packet_query()
-    init_time
-    @result
-  end
-
-  def close
-    @last_end_time + 1
   end
 end
