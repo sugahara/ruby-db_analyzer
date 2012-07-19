@@ -1,5 +1,5 @@
 class Main
-  require './analyzer2.rb'
+  require './analyzer.rb'
   require 'mysql'
   require './io.rb'
   db_host = ARGV[0]
