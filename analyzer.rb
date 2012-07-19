@@ -195,4 +195,13 @@ class Analyzer
   def get_all_packet
     packet_query()
   end
+
+  def get_packet(protocol)
+    packet_query(protocol)
+  end
+
+  def get_flow(protocol)
+    flow_query(protocol)
+  end
+
 end
