@@ -23,16 +23,13 @@ class Main
   analyzer.get_tcp_packet
   analyzer.get_udp_packet
   analyzer.get_all_packet
-  #IO.to_file(analyzer.get_tcp_flow, "tcp_flow"+delta_t.to_s+"_"+tbl+".log")
-  #puts "get_udp_flow"
-  #IO.to_file(analyzer.get_udp_flow, "udp_flow"+delta_t.to_s+"_"+tbl+".log")
-  #puts "get_all_flow"
-  #IO.to_file(analyzer.get_all_flow, "all_flow"+delta_t.to_s+"_"+tbl+".log")
-  #puts "get_tcp_packet"
-  #IO.to_file(analyzer.get_tcp_packet, "tcp_packet"+delta_t.to_s+"_"+tbl+".log")
-  #puts "get_udp_packet"
-  #IO.to_file(analyzer.get_udp_packet, "udp_packet"+delta_t.to_s+"_"+tbl+".log")
-  #puts "get_all_packet"
-  #IO.to_file(analyzer.get_all_packet, "all_packet"+delta_t.to_s+"_"+tbl+".log")
+  analyzer.get_packet("http", 4)
+  analyzer.get_flow("http", 4)
+  analyzer.get_packet("dns", 4)
+  analyzer.get_flow("dns", 4)
+  analyzer.get_packet("nfs", 4)
+  analyzer.get_flow("nfs", 4)
+  analyzer.get_packet("arp", 2)
+  analyzer.get_flow("arp", 2)
 
 end
