@@ -175,11 +175,11 @@ class Analyzer
   end
   
   def get_tcp_flow
-    flow_query("tcp")
+    flow_query("tcp", 3)
   end
   
   def get_udp_flow
-    flow_query("udp")
+    flow_query("udp", 3)
   end
   
   def get_all_flow
@@ -187,11 +187,11 @@ class Analyzer
   end
 
   def get_tcp_packet
-    packet_query("tcp")
+    packet_query("tcp", 3)
   end
 
   def get_udp_packet
-    packet_query("udp")
+    packet_query("udp", 3)
   end
 
   def get_all_packet
