@@ -1,30 +1,36 @@
+require 'active_record'
+class Migration < ActiveRecord::Migration
+end
+class ProcessingTable < ActiveRecord::Base
+end
+
 class AddIndex
-  require 'mysql'
-  
+
   db_host = ARGV[0]
   db_user_name = ARGV[1]
   db_pass = ARGV[2]
   db_name = ARGV[3]
   
-  db = Mysql::new(db_host, db_user_name, db_pass, db_name)
-
-  #sql = "SHOW TABLES FROM tcpdump"
-  tables =  db.list_tables
+  ar_info = {
+    :adapter => 'mysql',
+    :host => db_host,
+    :username => db_user_name,
+    :password => db_pass,
+    :database => db_name
+  }
+  
+  ActiveRecord::Base.establish_connection(ar_info)
+  tables = ActiveRecord::Base.connection.tables
+  colmun = ["time"]
+  colmun_text = ["protocol_4", "protocol_5"]
   tables.each do |tbl|
-    fields = db.list_fields(tbl).fetch_fields
-    (1...fields.size()).each do |t|
-      if fields[t].type != Mysql::Field::TYPE_BLOB
-        sql = "ALTER TABLE `#{tbl}` ADD INDEX #{fields[t].name}(#{fields[t].name})"
-        p sql
-      else
-        #sql = "ALTER TABLE `#{tbl}` ADD INDEX #{fields[t].name}(#{fields[t].name}(200))"
-        #p sql
-      end
-      begin
-        db.query(sql)
-      rescue
-        puts db.error
-      end
+    colmun.each do |col|
+      #Migration.add_index(tbl.intern, col)
+    end
+    colmun_text.each do |col|
+      ProcessingTable.connection.execute("ALTER TABLE `#{tbl}` ADD FULLTEXT (`#{col}`)")
     end
   end
+  
+  
 end

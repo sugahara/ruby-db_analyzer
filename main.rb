@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class Main
   require './analyzer.rb'
   require 'mysql'
@@ -12,24 +13,29 @@ class Main
   # I want to go home as soon as possible.
   # Me too.
   end_time = as_soon_as_possible
+  
+  #そのまま集計するプログラム
 
   db = Mysql::new(db_host, db_user_name, db_pass, db_name)
   tables = db.list_tables
+  tables.delete_if {|x| /^*view*/ =~ x}
+  tables.delete_if {|x| /^*scandump-*/ =~ x}
+
   analyzer = Analyzer.new(tables, db, delta_t)
-  puts "get_tcp_flow"
-  analyzer.get_tcp_flow
-  analyzer.get_udp_flow
-  analyzer.get_all_flow
-  analyzer.get_tcp_packet
-  analyzer.get_udp_packet
-  analyzer.get_all_packet
-  analyzer.get_packet("http", 4)
-  analyzer.get_flow("http", 4)
-  analyzer.get_packet("dns", 4)
-  analyzer.get_flow("dns", 4)
+
+  #analyzer.get_tcp_flow
+  #analyzer.get_udp_flow
+  #analyzer.get_all_flow
+  #analyzer.get_tcp_packet
+  #analyzer.get_udp_packet
+  #analyzer.get_all_packet
+  #analyzer.get_packet("http", 4)
+  #analyzer.get_flow("http", 4)
+  #analyzer.get_packet("dns", 4)
+  #analyzer.get_flow("dns", 4)
   analyzer.get_packet("nfs", 4)
-  analyzer.get_flow("nfs", 4)
-  analyzer.get_packet("arp", 2)
-  analyzer.get_flow("arp", 2)
+  #analyzer.get_flow("nfs", 4)
+  #analyzer.get_packet("arp", 2)
+  #analyzer.get_flow("arp", 2)
 
 end

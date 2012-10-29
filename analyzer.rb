@@ -2,8 +2,8 @@
 class Analyzer
   require 'ruby-debug'
   # DBのインスタンスをもらってDBから値を取得して出力まで
-  def initialize(table, db, delta_t)
-    @tables = table
+  def initialize(tables, db, delta_t)
+    @tables = tables
     @processing_table = @tables.first
     @db = db
     @delta_t = delta_t
